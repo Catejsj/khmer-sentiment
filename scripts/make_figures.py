@@ -95,7 +95,7 @@ def fig_sentiment_words():
                   fontsize=11, color=INK_2, labelpad=12)
     ax.set_title("Which Khmer words carry sentiment",
                  fontsize=17, color=INK, pad=38, loc="left", fontweight="bold")
-    ax.text(0, 1.012, "computed on the 272 training sentences",
+    ax.text(0, 1.012, f"computed on the {len(train)} training sentences",
             transform=ax.transAxes, fontsize=11, color=INK_2)
     ax.xaxis.grid(True, color=GRID, linewidth=1)
     ax.set_axisbelow(True)
@@ -114,8 +114,15 @@ def fig_sentiment_words():
 
 
 def fig_feature_counts():
+    """Counts are read from the saved feature files so the figure cannot drift
+    out of step with the data the way a hardcoded list does."""
+    import numpy as _np
     names = ["Bag-of-Words", "N-grams\n(1–2)", "TF-IDF\n(1–2)", "Word2Vec", "fastText"]
-    counts = [858, 1086, 1086, 100, 100]
+    counts = []
+    for key in ("bow", "ngram", "tfidf", "word2vec", "fasttext"):
+        z = _np.load(os.path.join(ROOT, "data", "features", f"{key}.npz"), allow_pickle=True)
+        counts.append(int(z["train_shape"][1]) if str(z["kind"]) == "sparse"
+                      else int(z["train"].shape[1]))
 
     fig, ax = plt.subplots(figsize=(11, 6), dpi=200)
     fig.patch.set_facecolor(SURFACE)

@@ -29,12 +29,12 @@ Two slides, script, and answers. ~3 minutes.
 > turning our cleaned sentences into numbers — five different ways, because it
 > isn't obvious in advance which works best.
 >
-> **Bag-of-Words** counts words. One column per word, 1,187 of them. It throws away
-> word order, which matters here: មិន ល្អ — 'not good' — and ល្អ — 'good' — both
-> contain ល្អ, so Bag-of-Words can't separate them.
+> **Bag-of-Words** counts words. One column per word, 1,187 of them. It throws
+> away word order, which matters here: មិន ល្អ — 'not good' — and ល្អ — 'good' —
+> both contain ល្អ, so Bag-of-Words can't separate them.
 >
-> **N-grams** fix that by adding word pairs, so 'មិន ល្អ' becomes its own feature.
-> That takes us to 1,565 features.
+> **N-grams** fix that by adding word pairs, so 'មិន ល្អ' becomes its own
+> feature. That takes us to 1,565 features.
 >
 > **TF-IDF** keeps the same features but weights instead of counting. Words in
 > nearly every sentence get pushed down, distinctive ones lifted.
@@ -56,6 +56,45 @@ Two slides, script, and answers. ~3 minutes.
 
 ---
 
+### If you have time, or get asked, expand any of these
+
+**Bag-of-Words, worked through.** Three toy sentences, the whole idea:
+
+```
+                    ល្អ   មិន   ណាស់
+"ល្អ ណាស់"  good    1     0      1
+"មិន ល្អ"   not     1     1      0
+```
+
+Both rows contain ល្អ. To Bag-of-Words they look similar, even though one is
+positive and one is negative. That is the failure n-grams exist to fix.
+
+**N-grams.** Adding the pair `មិន ល្អ` as its own column separates them:
+
+```
+                    ល្អ   មិន   មិន ល្អ
+"ល្អ ណាស់"           1     0       0
+"មិន ល្អ"            1     1       1
+```
+
+378 bigrams survived our `min_df=2` filter, on top of the 1,187 single words.
+
+**TF-IDF, in one sentence.** Term Frequency × Inverse Document Frequency —
+how often a word appears *here*, divided by how many sentences contain it at
+all. A word in every sentence scores near zero; a word in three sentences scores
+high. Raw counts say the most common word is the most important; TF-IDF says the
+opposite.
+
+**Word2Vec.** Slide a five-word window along the text. Given a word, predict its
+neighbours. Words that keep similar company end up with similar vectors. 100
+numbers per word, then averaged to 100 numbers per sentence.
+
+**fastText.** Same, but each word is also split into 3-to-6 character chunks. A
+word's vector is the sum of its chunks, so an unseen word still gets one built
+from pieces it shares with words that were seen.
+
+---
+
 ## SLIDE 2 — What the features contain
 
 **Title:** Do the features carry sentiment?
@@ -72,21 +111,99 @@ Two slides, script, and answers. ~3 minutes.
 >
 > And unlike a lot of these analyses, these are **real sentiment words**.
 >
-> On the positive side: ប្រឹងប្រែង — to strive, to make an effort. ប្រសើរឡើង —
-> to improve. ធានា — to guarantee. ទទួលបាន — to gain, to receive.
+> On the positive side: ប្រកបដោយ — 'endowed with', which prefixes praise.
+> អប់រំ and ការអប់រំ — 'to educate' and 'education'. ជួយ — 'to help'.
 >
-> On the negative side: ប៉ះពាល់ — to affect adversely. ប្រឈម — to face, to
-> confront. ពេក — excessively. ចោល — to discard.
+> On the negative side: បញ្ហា — 'problem'. ប៉ះពាល់ — 'to affect adversely'.
+> ករណី — 'case', as in an incident. ពេក — 'excessively'.
 >
 > [PAUSE]
 >
-> And the strongest frequent negative signal is **មិន — 'not' — appearing 90
-> times in training, 64 of them in negative sentences.** That is direct evidence for Person 3's decision to
-> keep negation out of the stopword list. If it had been treated as a stopword,
-> we would have deleted our single best negative feature.
+> These are not topic words that happen to correlate. They are the words a Khmer
+> speaker would point at if you asked which parts of the sentence carry the
+> feeling. That is the evidence the features work.
+>
+> And separately — មិន, 'not', appears **90 times in training, 64 of them in
+> negative sentences.** That is direct evidence for Person 3's decision to keep
+> negation out of the stopword list. Treating it as a stopword would have deleted
+> our single best negative feature.
 >
 > So the features do carry sentiment. Whether the models can use it on only 408
 > training sentences is Person 5 and 6's slide."
+
+---
+
+## ⭐ Where slide 2's numbers come from
+
+The `+2.2`, `−2.4` beside each bar are **log-odds**. This is the follow-up most
+likely to be asked, so know it cold.
+
+### What log-odds means
+
+> "It's how many times more likely that word is to appear in one class than the
+> other. Zero means equally common in both. The further from zero, the more
+> lopsided."
+
+Because it's a logarithm, small numbers mean big differences:
+
+| log-odds | means | |
+|---|---|---|
+| 0 | 1× | equally common |
+| 1 | ~3× | more likely |
+| 2 | ~7× | more likely |
+| 2.4 | ~11× | more likely |
+
+### The actual bars, with their raw counts
+
+| Word | Meaning | On the chart | In words | pos | neg |
+|---|---|---|---|---|---|
+| ប្រកបដោយ | endowed with | **+2.19** | ~9× more likely positive | 8 | **0** |
+| អប់រំ | to educate | +2.08 | ~8× more likely positive | 7 | 0 |
+| ការអប់រំ | education | +1.94 | ~7× more likely positive | 6 | 0 |
+| បញ្ហា | problem | **−2.40** | ~11× more likely negative | **0** | 10 |
+| ប៉ះពាល់ | to affect adversely | −2.20 | ~9× more likely negative | 0 | 8 |
+| ករណី | case, incident | −1.95 | ~7× more likely negative | 0 | 6 |
+
+> "So បញ្ហា — 'problem' — appears ten times in negative sentences and never once
+> in a positive one. ប្រកបដោយ is the mirror image: eight times positive, never
+> negative."
+
+**Quoting the raw counts alongside the log-odds is what makes it land.** The bar
+height is abstract; "ten times versus zero" is not.
+
+### The formula
+
+```
+                  share of that word among POSITIVE sentences
+   log-odds = log ──────────────────────────────────────────
+                  share of that word among NEGATIVE sentences
+```
+
+Computed on the **408 training sentences only** — using test to decide what to
+say about the features would be leakage through the back door.
+
+### Three details you will be asked about
+
+**"Why proportions, not raw counts?"**
+> "The classes aren't the same size — 2,143 word occurrences in positive
+> sentences against 2,130 in negative. Close here, but if one class had twice the
+> text every word would look twice as common in it. Log-odds compares shares, so
+> class size cancels out."
+
+**"How is it a ratio if one count is zero?"**
+> "Add-one smoothing. We add 1 to every count before dividing, otherwise a word
+> appearing zero times in one class gives division by zero. It's why បញ្ហា is
+> −2.40 and not infinity."
+
+**"Why only some words?"**
+> "Minimum 4 occurrences overall. 317 of the 1,187 words meet that. Without the
+> threshold the top of the list is just rare words that happened to land in one
+> class once."
+
+**"Why a log at all?"**
+> "It makes the scale symmetric. Twice as likely each way becomes +0.7 and −0.7 —
+> equal distance from zero. A plain ratio gives 2 and 0.5, which doesn't plot
+> symmetrically."
 
 ---
 
@@ -100,6 +217,15 @@ Two slides, script, and answers. ~3 minutes.
 | **22.8%** | out-of-vocabulary rate | word occurrences in test absent from training |
 | **2,883** | training vocabulary | distinct words the embeddings learned |
 | **408 / 72 / 120** | train / val / test | stratified split of 600 |
+| **317** | words on the slide-2 shortlist | those appearing ≥4 times overall |
+
+**On the 100:** be honest that it's a choice, not a calculation.
+
+> "That's a hyperparameter — `vector_size=100`. A standard starting point for a
+> corpus this small. Larger vectors need more data to fill meaningfully; with 408
+> sentences, going higher would mostly add noise."
+
+Inventing a derivation for it invites a question you can't survive.
 
 ---
 
@@ -115,7 +241,9 @@ X_test  = vec.transform(test_text)
 ```
 
 > "`fit_transform` on train is where the vocabulary is learned. On val and test
-> we only call `transform`. That is the whole no-leakage argument."
+> we only call `transform`. A word that only appears in test is simply ignored,
+> because the vectoriser was never told it exists. That is the whole no-leakage
+> argument."
 
 **One Khmer-specific detail worth mentioning:** `token_pattern=r"\S+"`.
 scikit-learn's default pattern assumes English word characters and would drop
@@ -131,7 +259,9 @@ model.wv.get_mean_vector(tokens, pre_normalize=True, post_normalize=True)
 ```
 
 The model gives a vector per word; the classifier needs one per sentence, so the
-word vectors are averaged and normalised.
+word vectors are averaged. `pre_normalize` scales each word to length 1 first so
+one extreme word can't dominate; `post_normalize` scales the finished sentence
+vector so long and short sentences stay comparable.
 
 ---
 
@@ -196,3 +326,10 @@ training sentences across three classes buys you.
 > "scikit-learn's default tokenizer pattern is built for English word characters
 > and drops Khmer script entirely. Our text is pre-segmented with spaces between
 > tokens, so we split on whitespace."
+
+**"Can you show where those numbers come from?"**
+> "Yes — one command regenerates the whole analysis."
+
+```bash
+./.venv/bin/python scripts/inspect_representations.py
+```
