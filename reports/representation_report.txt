@@ -3,9 +3,9 @@ TEXT REPRESENTATION  -  five feature sets for the classifier
 ==============================================================================
 
 [1] INPUT
-    train   272 sentences   {'neutral': 103, 'negative': 90, 'positive': 79}
-    val      48 sentences   {'neutral': 18, 'negative': 16, 'positive': 14}
-    test     80 sentences   {'neutral': 30, 'negative': 27, 'positive': 23}
+    train   408 sentences   {'neutral': 155, 'negative': 129, 'positive': 124}
+    val      72 sentences   {'neutral': 27, 'negative': 23, 'positive': 22}
+    test    120 sentences   {'neutral': 46, 'negative': 38, 'positive': 36}
 
     Text is already word-segmented by scripts/preprocess.py, with tokens
     joined by spaces. The vectorisers use token_pattern=\S+ because
@@ -16,11 +16,11 @@ TEXT REPRESENTATION  -  five feature sets for the classifier
 
 [2] REPRESENTATIONS BUILT
     name            size             train shape
-    bow              858 features   train   (272, 858)   sparsity 98.41%
-    ngram           1086 features   train  (272, 1086)   sparsity 98.55%
-    tfidf           1086 features   train  (272, 1086)   sparsity 98.55%
-    word2vec         100 dims       train   (272, 100)   vocab 2330, test OOV 28.1%
-    fasttext         100 dims       train   (272, 100)   vocab 2330, test OOV 28.1%
+    bow             1187 features   train  (408, 1187)   sparsity 98.79%
+    ngram           1565 features   train  (408, 1565)   sparsity 98.93%
+    tfidf           1565 features   train  (408, 1565)   sparsity 98.93%
+    word2vec         100 dims       train   (408, 100)   vocab 2883, test OOV 22.8%
+    fasttext         100 dims       train   (408, 100)   vocab 2883, test OOV 22.8%
 
 [3] WHY min_df=2
     A word appearing in only one sentence cannot generalise - it can only
@@ -36,7 +36,7 @@ TEXT REPRESENTATION  -  five feature sets for the classifier
     fastText      same, plus character n-grams, so a word never seen in
                   training still gets a vector built from its pieces
 
-    That last point is measurable here: 28.1% of the words in the test
+    That last point is measurable here: 22.8% of the words in the test
     set never appear in training. Word2Vec drops every one of them;
     fastText builds a vector from character chunks instead.
 

@@ -140,11 +140,52 @@ def fig_feature_counts():
     return out
 
 
+def fig_model_results():
+    """Validation vs test macro-F1 for the top models - the two disagree, and
+    that disagreement is the point of the figure."""
+    path = os.path.join(ROOT, "reports", "model_results.csv")
+    if not os.path.exists(path):
+        print("skipping model figure - run scripts/train_models.py first")
+        return None
+    d = pd.read_csv(path).dropna(subset=["test_f1"]).nlargest(10, "test_f1")
+    d = d.iloc[::-1]
+    names = [f"{r.model}\n{r.representation[:22]}" for r in d.itertuples()]
+
+    fig, ax = plt.subplots(figsize=(11, 8), dpi=200)
+    fig.patch.set_facecolor(SURFACE)
+    y = np.arange(len(d))
+    ax.barh(y + 0.19, d["val_f1"], height=0.36, color="#9ec5f4", label="validation")
+    ax.barh(y - 0.19, d["test_f1"], height=0.36, color=BLUE, label="test")
+    ax.axvline(1 / 3, color="#9a9992", linewidth=1.4, linestyle="--")
+    ax.text(1 / 3 + 0.006, len(d) - 0.4, "random baseline 0.333",
+            fontsize=10, color=INK_2)
+
+    ax.set_yticks(y)
+    ax.set_yticklabels(names, fontsize=10, color=INK)
+    ax.set_xlabel("macro-F1", fontsize=11, color=INK_2, labelpad=10)
+    ax.set_title("Top 10 models: validation vs test",
+                 fontsize=17, color=INK, pad=38, loc="left", fontweight="bold")
+    ax.text(0, 1.012, "ranked by test score — validation ranks them differently",
+            transform=ax.transAxes, fontsize=11, color=INK_2)
+    ax.legend(frameon=False, fontsize=11, loc="lower right")
+    ax.xaxis.grid(True, color=GRID, linewidth=1)
+    ax.set_axisbelow(True)
+    ax.set_xlim(0, max(d["test_f1"].max(), d["val_f1"].max()) * 1.15)
+    style(ax)
+
+    fig.tight_layout()
+    out = os.path.join(FIGURES, "fig3_model_results.png")
+    fig.savefig(out, facecolor=SURFACE, bbox_inches="tight")
+    plt.close(fig)
+    return out
+
+
 def main():
     os.makedirs(FIGURES, exist_ok=True)
     use_khmer_font()
-    for path in (fig_sentiment_words(), fig_feature_counts()):
-        print("wrote", path)
+    for path in (fig_sentiment_words(), fig_feature_counts(), fig_model_results()):
+        if path:
+            print("wrote", path)
 
 
 if __name__ == "__main__":

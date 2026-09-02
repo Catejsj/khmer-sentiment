@@ -31,17 +31,17 @@ KHMER WORD SEGMENTATION  -  dictionary vs CRF
 
 [4] BOTH RUN ON OUR 400 SENTENCES
                      tokens  vocabulary  mean/sentence   seconds
-    dictionary        14488        3143           36.2       0.1
-    CRF               11615        3034           29.0       0.7
+    dictionary        21021        3813           35.0       0.1
+    CRF               17119        3706           28.5       0.9
 
-    dictionary tokens left unmatched : 2202  (15.2%)
+    dictionary tokens left unmatched : 3179  (15.1%)
     Those are positions where no dictionary word fit, so a single
     cluster was emitted. They are the visible cost of the dictionary
     approach - every one is a word the wordlist does not contain.
 
 [5] WHERE THEY DISAGREE
-    sentences segmented identically : 3 / 400
-    sentences segmented differently : 397
+    sentences segmented identically : 10 / 600
+    sentences segmented differently : 590
 
     Three examples, dictionary first:
 

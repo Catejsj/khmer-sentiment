@@ -42,6 +42,7 @@ FILES = {
     "Nita_pair2_annotation.xlsx": ("pair2", "Nita"),
     "Reaksa_pair2_annotation.xlsx": ("pair2", "Reaksa"),
     "pair3_seth.xlsx": ("pair3", "Seth"),
+    "krisna_pair3.xlsx": ("pair3", "Krisna"),
 }
 
 
@@ -120,9 +121,10 @@ def main() -> None:
     for pair in pairs:
         members = [(w, d) for (p, w), d in frames.items() if p == pair]
         if len(members) < 2:
-            who = members[0][0]
-            push(f"\n    {pair}: only {who} submitted - no second annotator, so no")
-            push(f"           agreement can be computed. Excluded from the dataset.")
+            # Agreement needs two independent annotators by definition, so a
+            # single-annotator pair is outside the scope of this analysis.
+            push(f"\n    {pair}: single annotator on file - agreement requires two,")
+            push(f"           so this pair is outside the scope of this analysis.")
             continue
 
         (w1, d1), (w2, d2) = members[0], members[1]

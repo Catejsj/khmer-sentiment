@@ -17,9 +17,9 @@ Two slides, script, and answers. ~3 minutes.
 
 | | What it captures | Features | Word order | Unseen words |
 |---|---|---|---|---|
-| Bag-of-Words | which words appear | 858 | ✗ | dropped |
-| N-grams (1–2) | + word pairs | 1,086 | partial | dropped |
-| TF-IDF (1–2) | + how distinctive | 1,086 | partial | dropped |
+| Bag-of-Words | which words appear | 1,187 | ✗ | dropped |
+| N-grams (1–2) | + word pairs | 1,565 | partial | dropped |
+| TF-IDF (1–2) | + how distinctive | 1,565 | partial | dropped |
 | Word2Vec | meaning from context | 100 | ✗ | dropped |
 | fastText | + character chunks | 100 | ✗ | **handled** |
 
@@ -29,12 +29,12 @@ Two slides, script, and answers. ~3 minutes.
 > turning our cleaned sentences into numbers — five different ways, because it
 > isn't obvious in advance which works best.
 >
-> **Bag-of-Words** counts words. One column per word, 858 of them. It throws away
+> **Bag-of-Words** counts words. One column per word, 1,187 of them. It throws away
 > word order, which matters here: មិន ល្អ — 'not good' — and ល្អ — 'good' — both
 > contain ល្អ, so Bag-of-Words can't separate them.
 >
 > **N-grams** fix that by adding word pairs, so 'មិន ល្អ' becomes its own feature.
-> That takes us to 1,086 features.
+> That takes us to 1,565 features.
 >
 > **TF-IDF** keeps the same features but weights instead of counting. Words in
 > nearly every sentence get pushed down, distinctive ones lifted.
@@ -46,9 +46,9 @@ Two slides, script, and answers. ~3 minutes.
 >
 > [PAUSE — this is the number that matters]
 >
-> That last point is not theoretical for us. **28% of the words in our test set
-> never appear in training.** Word2Vec drops more than a quarter of the test
-> vocabulary. fastText builds vectors for them from character pieces.
+> That last point is not theoretical for us. **23% of the words in our test set
+> never appear in training.** Word2Vec drops nearly a quarter of the test
+> vocabulary entirely. fastText builds vectors for them from character pieces.
 >
 > One thing true of all five: every one was fit on training data only, then
 > applied to validation and test. Fitting on everything would leak test
@@ -80,12 +80,12 @@ Two slides, script, and answers. ~3 minutes.
 >
 > [PAUSE]
 >
-> And the strongest frequent negative signal is **មិន — 'not' — appearing 68
-> times** in the training set. That is direct evidence for Person 3's decision to
+> And the strongest frequent negative signal is **មិន — 'not' — appearing 90
+> times in training, 64 of them in negative sentences.** That is direct evidence for Person 3's decision to
 > keep negation out of the stopword list. If it had been treated as a stopword,
 > we would have deleted our single best negative feature.
 >
-> So the features do carry sentiment. Whether the models can use it on only 272
+> So the features do carry sentiment. Whether the models can use it on only 408
 > training sentences is Person 5 and 6's slide."
 
 ---
@@ -94,12 +94,12 @@ Two slides, script, and answers. ~3 minutes.
 
 | Number | Meaning | Derivation |
 |---|---|---|
-| **858** | Bag-of-Words features | words appearing in ≥2 training sentences |
-| **1,086** | n-gram / TF-IDF features | 858 unigrams + 228 bigrams |
+| **1,187** | Bag-of-Words features | words appearing in ≥2 training sentences |
+| **1,565** | n-gram / TF-IDF features | 1,187 unigrams + 378 bigrams |
 | **100** | embedding dimensions | a chosen hyperparameter, not derived |
-| **28.1%** | out-of-vocabulary rate | word occurrences in test absent from training |
-| **2,330** | training vocabulary | distinct words the embeddings learned |
-| **272 / 48 / 80** | train / val / test | stratified 65/12/20 split of 400 |
+| **22.8%** | out-of-vocabulary rate | word occurrences in test absent from training |
+| **2,883** | training vocabulary | distinct words the embeddings learned |
+| **408 / 72 / 120** | train / val / test | stratified split of 600 |
 
 ---
 
@@ -154,33 +154,34 @@ feature-importance analysis.
 
 | | |
 |---|---|
-| Bag-of-Words | 0.525 |
-| N-grams | 0.486 |
-| TF-IDF | 0.472 |
-| Word2Vec | 0.268 |
-| fastText | 0.215 |
+| fastText | 0.436 |
+| Bag-of-Words | 0.412 |
+| N-grams | 0.412 |
+| TF-IDF | 0.396 |
+| Word2Vec | 0.363 |
 
 These are **not results** — they prove the files load and train. Person 5 tunes
-properly. Worth noting the pattern though: the count-based three beat the
-embeddings comfortably, which is what you would expect when embeddings have only
-272 sentences to learn from.
+properly and reports the real numbers. Worth noting that all five sit close
+together and only a little above the 0.333 random baseline, which is what 408
+training sentences across three classes buys you.
 
 ---
 
 ## Questions
 
 **"Which representation is best?"**
-> "Person 6's slide. Our baseline suggests the count-based ones, because 272
-> sentences is far too little for embeddings to learn good word vectors."
+> "Person 6's slide. After tuning it turned out to be TF-IDF — the three best
+> models on test all use it. Our untuned baseline had ranked fastText first,
+> which is a good illustration of how little an untuned single run tells you."
 
-**"Why is the OOV rate 28% when English projects see under 10%?"**
-> "Two reasons. Our training set is only 272 sentences, and Khmer compounds
+**"Why is the OOV rate 23% when English projects see under 10%?"**
+> "Two reasons. Our training set is only 408 sentences, and Khmer compounds
 > heavily, so the vocabulary grows faster per sentence than English. It is the
 > strongest argument for fastText in this project."
 
-**"28% of what exactly?"**
+**"23% of what exactly?"**
 > "Word occurrences in the test set — not distinct words. Of every word token in
-> test, 28% are words the training data never contained."
+> test, 23% are words the training data never contained."
 
 **"Do the 100 dimensions mean anything?"**
 > "Not individually. No single dimension is 'positive'. Only distances between

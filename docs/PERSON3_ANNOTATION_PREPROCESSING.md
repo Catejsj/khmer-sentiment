@@ -1,6 +1,6 @@
 # Person 3 — Annotation & Preprocessing
 
-Two slides, script, and answers. ~3 minutes.
+Two slides plus one backup, script, and answers. ~3 minutes.
 
 ---
 
@@ -18,33 +18,34 @@ Two slides, script, and answers. ~3 minutes.
 |---|---|---|---|---|
 | pair1 | Bath, Nacc | 44.0% | **0.157** | slight |
 | pair2 | Nita, Reaksa | 62.0% | **0.380** | fair |
-| pair3 | Seth | — | — | partner not submitted |
-| | | **mean** | **0.269** | fair |
+| pair3 | Seth, Krisna | 94.5% | **0.917** | almost perfect |
+| | | **mean** | **0.485** | moderate |
 
 **Say (~90 sec):**
 
-> "We annotated 600 Khmer sentences from the kh-polarity corpus. Six people in
-> three pairs, 200 sentences each. Both members of a pair labelled the same 200
-> independently, so we could measure how much they agreed.
+> "We annotated 600 Khmer sentences. Six people in three pairs, 200 each. Both
+> members of a pair labelled the same sentences independently, so we could
+> measure how much they agreed.
 >
-> The guideline defines three labels — positive, neutral, negative — with a
-> five-step decision procedure and seven pre-decided edge cases.
->
-> Agreement came out low. Pair 1 reached Cohen's Kappa of 0.157, which is
-> 'slight'. Pair 2 reached 0.380, 'fair'. Mean 0.269.
+> The results vary enormously. Pair 3 reached Cohen's Kappa of **0.917** —
+> almost perfect. Pair 1 reached **0.157**, which is barely above chance. Same
+> guideline, same task, same three labels.
 >
 > [PAUSE]
 >
-> That is a real result, not a failure to report. Three-class sentiment is hard,
-> and it is harder in Khmer where there is no widely-agreed annotation standard
-> to anchor to. The confusion matrix shows where it broke down: the disagreement
-> is overwhelmingly **neutral versus a weak polarity**, not positive versus
-> negative. Annotators rarely swapped those two — they disagreed about whether
-> something counted as evaluative at all.
+> That spread is the finding. It isn't that Khmer sentiment is impossible to
+> annotate — pair 3 proves it can be done consistently. It's that our guideline
+> left room for interpretation, and the pairs who discussed it beforehand
+> converged while the others didn't.
 >
-> Only 212 of the 400 sentences had both annotators agree. Rather than break the
-> ties with a coin flip, we kept two datasets: the 212 agreed sentences, and a
-> 400-sentence version where disagreements fall back to the corpus's own label.
+> The confusion matrices show where it broke down: disagreement is almost
+> entirely **neutral versus a weak polarity**, not positive versus negative.
+> Annotators rarely swapped those two — they disagreed about whether a sentence
+> was evaluative at all.
+>
+> 401 of 600 sentences had both annotators agree. Rather than break the ties with
+> a coin flip, we kept two datasets: the 401 agreed sentences, and a
+> 600-sentence version where disagreements fall back to the corpus's own label.
 > We train on the larger one and report the smaller as a check."
 
 ---
@@ -73,9 +74,9 @@ segmented បឹង · កេត · ធ្លាប់ · បាន · ក្ល
 > Three of the standard steps do not transfer.
 >
 > **Tokenization.** Khmer is written without spaces between words. Splitting on
-> whitespace gives you three enormous chunks where there are actually 27 words.
-> Every downstream count would be meaningless. We use khmer-nltk, a CRF
-> segmenter trained on Khmer.
+> whitespace gives three enormous chunks where there are actually 27 words. Every
+> downstream count would be meaningless. We use khmer-nltk, a CRF segmenter
+> trained on Khmer.
 >
 > **Stemming and lemmatization — we do neither, and that is the right call.**
 > Khmer is an analytic language. Verbs do not conjugate, nouns do not inflect for
@@ -84,32 +85,25 @@ segmented បឹង · កេត · ធ្លាប់ · បាន · ក្ល
 > not because the tooling is missing, but because there is nothing for it to do.
 >
 > **Stopwords.** No standard Khmer stopword list ships with NLTK or spaCy, so we
-> wrote one: 50 function words — particles, classifiers, pronouns, conjunctions.
-> We deliberately kept the negation words. Dropping មិន, 'not', would invert the
-> polarity of exactly the sentences labelled negative.
+> wrote one: 50 function words. We deliberately kept the negation words.
+> Dropping មិន — 'not' — would invert the polarity of exactly the sentences
+> labelled negative.
 >
-> That decision is measurable. In the feature analysis, មិន is the single
-> strongest frequent negative signal, appearing 68 times in the training set. If
-> we had treated it as a stopword we would have deleted our best feature."
+> That decision is measurable. មិន is the strongest frequent negative feature in
+> the corpus. Treating it as a stopword would have deleted our best feature."
 
 ---
 
-## SLIDE 2b (or backup) — Dictionary vs CRF segmentation
+## BACKUP SLIDE — Dictionary vs CRF segmentation
 
-**Bullets**
-- Two ways to find word boundaries in Khmer
-- Dictionary: longest match against a wordlist
-- CRF: statistical model, predicts each boundary
-- We use CRF — here is why
-
-**Visual — this comparison:**
+Show only if asked how segmentation works.
 
 | | Tokens | Vocabulary | Unmatched |
 |---|---|---|---|
 | Dictionary (34,398 words) | 14,488 | 3,143 | **15.2%** |
 | CRF (khmer-nltk) | 11,615 | 3,034 | — |
 
-Only **3 of 400** sentences were segmented identically by both.
+Only **3 of 400** sentences segmented identically by both.
 
 **The example that settles it** — the number "2,073":
 
@@ -118,25 +112,19 @@ dictionary   ២ · , · ០ · ៧ · ៣        six fragments
 CRF          ២,០៧៣                    one token
 ```
 
-**Say (~45 sec):**
-
-> "There are two standard approaches. **Dictionary-based** maximum matching walks
-> left to right and takes the longest string that appears in a Khmer wordlist —
-> deterministic, and you can point at the dictionary and say why a cut was made.
-> **CRF** is a statistical model trained on hand-segmented Khmer that predicts
-> each boundary from surrounding characters.
+> "There are two standard approaches. **Dictionary-based** maximum matching takes
+> the longest string present in a Khmer wordlist — deterministic and inspectable.
+> **CRF** is a statistical model that predicts each boundary from surrounding
+> characters.
 >
 > We implemented both. Using a 34,000-word SIL dictionary, 15% of positions had
-> no dictionary match at all, and the two methods agreed on only 3 of our 400
-> sentences.
+> no match at all. This example is the clearest: the number 2,073. The dictionary
+> shatters it into six fragments because the digits aren't in the wordlist. The
+> CRF keeps it whole.
 >
-> This example is the clearest: the number two-thousand-and-seventy-three. The
-> dictionary shatters it into six fragments because the digits aren't in the
-> wordlist. The CRF keeps it as one token.
->
-> Our corpus is news text — full of names, places and numbers, exactly what a
-> fixed wordlist misses. So we use the CRF, and keep the dictionary
-> implementation as the comparison that shows what the CRF is buying us."
+> Our corpus is news text — names, places, numbers — exactly what a fixed
+> wordlist misses. So we use the CRF, and keep the dictionary as the comparison
+> that shows what the CRF buys us."
 
 ---
 
@@ -145,41 +133,42 @@ CRF          ២,០៧៣                    one token
 | | |
 |---|---|
 | Sentences annotated | 600 (3 pairs × 200) |
-| Pairs with two annotators | 2 |
-| Both annotators agreed | 212 / 400 (53.0%) |
-| Dataset used for training | 400 (disagreements resolved via corpus label) |
+| Cohen's κ | 0.157 / 0.380 / 0.917, mean **0.485** |
+| Both annotators agreed | 401 / 600 (66.8%) |
+| Dataset used for training | 600 (disagreements resolved via corpus label) |
 | Khmer stopwords defined | 50, minus 9 negation/degree words kept |
-| Vocabulary after cleaning | 2,330 words |
+| Vocabulary after cleaning | 2,883 words |
 
 ---
 
 ## Questions
 
-**"Why is your Kappa so low?"**
-> "Three-class sentiment is intrinsically harder than binary, and the confusion
-> matrix shows the disagreement is almost entirely neutral versus a weak
-> polarity — not positive versus negative. Our guideline defined the labels but
-> underspecified the threshold for 'evaluative enough to count'. That is a
-> guideline problem, and the fix is to tighten section 5 and re-annotate."
+**"Why is pair 1's Kappa so much lower than pair 3's?"**
+> "Same guideline, very different outcome — 0.157 against 0.917. The confusion
+> matrix shows pair 1 disagreed mostly on neutral versus a weak polarity, which
+> is exactly where our guideline was underspecified. Pair 3 evidently settled
+> that boundary between themselves before starting. The fix is to tighten the
+> guideline's threshold for 'evaluative enough to count' and re-annotate."
 
 **"Why didn't you use stemming or lemmatization?"**
-> "Because Khmer has no inflection to remove. It is an analytic language — verbs
-> don't conjugate, nouns don't take plural or case endings. Applying an English
-> stemmer would cut characters off Khmer words and corrupt them without removing
-> any affix, because there are no affixes."
+> "Because Khmer has no inflection to remove. It's analytic — verbs don't
+> conjugate, nouns don't take plural or case endings. An English stemmer would
+> cut characters off Khmer words without removing any affix, because there are
+> none."
 
-**"How does the segmenter work?"**
-> "khmer-nltk uses a conditional random field trained on segmented Khmer. It
-> predicts, for each character position, whether a word boundary falls there. We
-> use it as a library rather than reimplementing it."
+**"How does the CRF segmenter work?"**
+> "It predicts, for each position between two characters, whether a word boundary
+> falls there, using the surrounding characters as features. It was trained on
+> hand-segmented Khmer. We use it as a library rather than reimplementing it."
 
 **"Why keep the disagreed sentences at all?"**
-> "Because keeping only agreements biases the dataset toward easy cases. The 212
-> agreed sentences are the obvious ones; the hard ones are exactly what a
-> classifier needs to see. We report both datasets so the effect is visible
-> rather than hidden."
+> "Because keeping only agreements biases the dataset toward easy cases. The 401
+> agreed sentences are the obvious ones; the hard ones are what a classifier
+> needs to see. We report both datasets so the effect is visible rather than
+> hidden."
 
-**"What happened to pair 3?"**
-> "One annotator submitted, the other has not yet. With a single annotator there
-> is no agreement to measure, so those 200 sentences are excluded from the
-> dataset. They can be added once the second file arrives."
+**"Is 0.485 good?"**
+> "It's 'moderate' on the Landis and Koch scale. For three-class sentiment that's
+> acceptable but not strong. The honest reading is that it's an average of one
+> excellent pair and one poor one, which says more about our process than about
+> the task."

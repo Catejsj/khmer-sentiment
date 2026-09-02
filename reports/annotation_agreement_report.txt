@@ -13,6 +13,8 @@ ANNOTATION AGREEMENT  -  Khmer sentiment corpus
              {'neutral': np.int64(94), 'negative': np.int64(60), 'positive': np.int64(46)}
     pair3  Seth      200 rows   complete
              {'neutral': np.int64(78), 'positive': np.int64(65), 'negative': np.int64(57)}
+    pair3  Krisna    200 rows   complete
+             {'neutral': np.int64(83), 'positive': np.int64(61), 'negative': np.int64(56)}
 
     Note: labels were typed by hand, so 'Neutral', 'neutral' and
     'Positive ' with a trailing space all appeared. They are normalised
@@ -41,10 +43,16 @@ ANNOTATION AGREEMENT  -  Khmer sentiment corpus
       Nita:neu          18          69          29
       Nita:neg           4          16          31
 
-    pair3: only Seth submitted - no second annotator, so no
-           agreement can be computed. Excluded from the dataset.
+    pair3   Seth vs Krisna   (200 sentences)
+      raw agreement : 94.5%  (189/200)
+      Cohen's Kappa : 0.917   (almost perfect)
+      confusion (rows=Seth, cols=Krisna):
+                Krisna:pos  Krisna:neu  Krisna:neg
+      Seth:pos          61           4           0
+      Seth:neu           0          75           3
+      Seth:neg           0           4          53
 
-    mean Cohen's Kappa across pairs : 0.269  (fair)
+    mean Cohen's Kappa across pairs : 0.485  (moderate)
 
 
 [3] EACH ANNOTATOR vs THE ORIGINAL CORPUS LABEL
@@ -53,6 +61,7 @@ ANNOTATION AGREEMENT  -  Khmer sentiment corpus
     Nacc       pair1     0.144     43.0%
     Nita       pair2     0.429     62.0%
     Reaksa     pair2     0.587     72.5%
+    Krisna     pair3     0.542     69.5%
     Seth       pair3     0.602     73.5%
 
     The corpus ships its own polarity label. We treat it as a
@@ -62,12 +71,12 @@ ANNOTATION AGREEMENT  -  Khmer sentiment corpus
 
 
 [4] ADJUDICATED DATASET
-    sentences from pairs with two annotators : 400
-      both annotators agreed                 : 212  (53.0%)
-      disagreed, needs the pair to resolve   : 188
+    sentences from pairs with two annotators : 600
+      both annotators agreed                 : 401  (66.8%)
+      disagreed, needs the pair to resolve   : 199
 
     label distribution of the agreed rows:
-      {'neutral': np.int64(103), 'positive': np.int64(55), 'negative': np.int64(54)}
+      {'neutral': np.int64(178), 'positive': np.int64(116), 'negative': np.int64(107)}
 
     The agreed rows are the training data. Disagreements are left
     unlabelled rather than broken by a coin flip: the pair should settle
@@ -75,19 +84,19 @@ ANNOTATION AGREEMENT  -  Khmer sentiment corpus
 
 
 [5] TWO DATASET VARIANTS
-    A. labelled_dataset.csv             212 rows - only where both annotators agreed
+    A. labelled_dataset.csv             401 rows - only where both annotators agreed
        Cleanest signal, but small, and the surviving rows are the easy
        ones: keeping only agreements biases the set toward obvious cases.
-    B. labelled_dataset_resolved.csv    400 rows - disagreements settled by the corpus label
+    B. labelled_dataset_resolved.csv    600 rows - disagreements settled by the corpus label
        Nearly twice the data and keeps the hard cases, at the cost of
        leaning on an external label for 47% of rows.
-       {'neutral': np.int64(151), 'negative': np.int64(133), 'positive': np.int64(116)}
+       {'neutral': np.int64(228), 'negative': np.int64(190), 'positive': np.int64(182)}
 
     We train on B and report A as a robustness check. Person 5 should
     state which was used - the two are not interchangeable.
 
 
 [6] FILES WRITTEN
-    data/processed/adjudicated_annotations.csv   all 400 rows, with both votes
-    data/processed/labelled_dataset.csv          212 agreed rows
-    data/processed/labelled_dataset_resolved.csv 400 rows, disagreements resolved
+    data/processed/adjudicated_annotations.csv   all 600 rows, with both votes
+    data/processed/labelled_dataset.csv          401 agreed rows
+    data/processed/labelled_dataset_resolved.csv 600 rows, disagreements resolved

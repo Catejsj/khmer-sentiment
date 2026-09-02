@@ -1,0 +1,75 @@
+==============================================================================
+RECURRENT NEURAL NETWORK
+==============================================================================
+
+    vocabulary (train only) : 2885
+    embedding seeded from Word2Vec : 2883/2885 words matched
+    embedding dim 100, hidden 64, max length 60
+    train 408   val 72   test 120
+
+    Why a recurrent network at all: the eight classical models read a
+    fixed-length vector per sentence and cannot see word order. An RNN
+    reads word by word and carries a hidden state, so order is part of
+    the input. In Khmer that matters for negation - មិន placed before a
+    positive word inverts the sentence.
+
+
+[SimpleRNN]
+    stopped at epoch 17, best validation macro-F1 at epoch 7
+     epoch  train loss  val macro-F1
+         1      1.1093         0.255
+         2      1.0915         0.319
+         3      1.0906         0.413
+       ...
+        15      0.0850         0.325
+        16      0.0954         0.366
+        17      0.0605         0.365
+
+    TEST
+      accuracy        0.417
+      precision macro 0.406
+      recall macro    0.407
+      F1 macro        0.405
+
+      confusion matrix (rows = true, cols = predicted):
+                pred:pos  pred:neu  pred:neg
+      true:pos        10        17         9
+      true:neu        11        24        11
+      true:neg        11        11        16
+
+
+[LSTM]
+    stopped at epoch 16, best validation macro-F1 at epoch 6
+     epoch  train loss  val macro-F1
+         1      1.1015         0.332
+         2      1.1003         0.410
+         3      1.0854         0.405
+       ...
+        14      0.2033         0.353
+        15      0.1896         0.405
+        16      0.0941         0.386
+
+    TEST
+      accuracy        0.542
+      precision macro 0.538
+      recall macro    0.532
+      F1 macro        0.529
+
+      confusion matrix (rows = true, cols = predicted):
+                pred:pos  pred:neu  pred:neg
+      true:pos        13        13        10
+      true:neu         7        29        10
+      true:neg         5        10        23
+
+
+[WHAT TO CONCLUDE]
+    Both variants stop improving within a handful of epochs and then
+    overfit - 408 training sentences cannot support a network with an
+    embedding table this size. The classical models on averaged
+    embeddings do better precisely because averaging is a much stronger
+    constraint than letting a recurrent layer learn freely.
+
+    That is the honest finding: on this dataset the RNN is included
+    because the brief requires it and because it is the only model that
+    sees word order, not because it wins. With a few thousand more
+    annotated sentences the comparison would likely change.
