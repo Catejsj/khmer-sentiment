@@ -1,0 +1,146 @@
+==============================================================================
+INSIDE THE FIVE REPRESENTATIONS
+train only: 272 sentences  {'positive': 79, 'neutral': 103, 'negative': 90}
+==============================================================================
+
+[1] ONE SENTENCE, SEEN AS NUMBERS
+    label: positive
+    cleaned: រមណីយដ្ឋាន ស្ទឹង បែក បួន អម ជាមួយនឹង សម្រស់ ធម្មជាតិ ស្រស់ ឆើតឆាយ នៃ ដង ទន្លេ កាច់ កុង ពត់ ពេន ធ្វើឲ្យ ភ្ញៀវ ទេសចរ គយគន់
+
+    Bag-of-Words : 858 slots, 29 non-zero
+      កន្លែង=1, ការងារ=1, កុង=1, ក្រហម=1, គយគន់=1, គ្រប់=1, ចង់=1, ចេះ=1, ឆើតឆាយ=1, ជាមួយនឹង=1, ដង=1, ដូចជា=1
+
+    TF-IDF       : same slots, weighted
+      ស្ងប់=0.21, ស្ទឹង=0.21, ពេលព្រឹក=0.21, ក្រហម=0.21, សម្រស់=0.21, បញ្ចេញ=0.21, ឆើតឆាយ=0.21, ដង=0.21
+
+
+[2] BAG-OF-WORDS - 20 most frequent words
+      មាន            133   មិន             68   នៃ              53   ឆ្នាំ           48   
+      ប្រទេស          33   តាម             32   កម្ពុជា         28   ឱ្យ             25   
+      ថ្ងៃ            23   ខ្លួន           23   ត្រូវបាន        22   ទៀត             22   
+      ចំនួន           22   កំពុង           21   នៅក្នុង         21   ធ្វើ            21   
+      ២០២២            20   ខេត្ត           19   ខ្មែរ           18   នូវ             18   
+
+    Generic vocabulary. Nothing here separates the classes - every
+    sentiment talks about the same everyday topics.
+
+
+[3] WHICH WORDS SIGNAL EACH SENTIMENT
+    Log-odds against the other two classes combined. Higher means more
+    strongly associated with that sentiment.
+
+    POSITIVE
+      ប្រឹងប្រែង             2.38   (seen 5)
+      ប្រសើរឡើង              2.19   (seen 4)
+      ធានា                   2.19   (seen 4)
+      ក្រៅពី                 2.19   (seen 4)
+      ធម្មជាតិ               1.84   (seen 7)
+      សៀមរាប                 1.84   (seen 7)
+      ទទួលបាន                1.68   (seen 6)
+      ប្រជាជន                1.68   (seen 6)
+      អង្គរ                  1.68   (seen 6)
+      វិស័យ                  1.57   (seen 9)
+      ប្រកបដោយ               1.50   (seen 5)
+      ធ្វើឲ្យ                1.50   (seen 5)
+
+    NEUTRAL
+      សាលា                   2.23   (seen 5)
+      ប្លុក                  2.05   (seen 4)
+      ពេញ                    2.05   (seen 4)
+      ចាប់ផ្តើម              2.05   (seen 4)
+      ព្រមទាំង               2.05   (seen 4)
+      សវនាការ                2.05   (seen 4)
+      ការបរទេស               2.05   (seen 4)
+      ប្រាក់                 1.69   (seen 7)
+      សរុប                   1.54   (seen 6)
+      ផ្លាស់ប្តូរ            1.36   (seen 5)
+      ប្រចាំ                 1.36   (seen 5)
+      ចំណុច                  1.36   (seen 5)
+
+    NEGATIVE
+      បង                     2.36   (seen 6)
+      ប៉ះពាល់                2.20   (seen 5)
+      ប្រឈម                  2.02   (seen 4)
+      គ្រប់គ្រាន់            2.02   (seen 4)
+      គ្រាប់                 2.02   (seen 4)
+      រង                     2.02   (seen 4)
+      អូន                    2.02   (seen 4)
+      ចោល                    2.02   (seen 4)
+      ដក                     2.02   (seen 4)
+      ពេក                    1.66   (seen 7)
+      ឯង                     1.51   (seen 10)
+      មិន                    1.47   (seen 68)
+
+
+[4] N-GRAMS - what word pairs add
+    most frequent bigrams:
+      ឆ្នាំ ២០២២                       20
+      ហ៊ុន សែន                         8
+      ខ្លួន ឯង                         7
+      សម រង្ស៊ី                        7
+      ខុស ច្បាប់                       5
+      ខែកញ្ញា ឆ្នាំ                    5
+      សម្តេច តេជោ                      5
+      រាជធានី ភ្នំពេញ                  5
+      អាស៊ី សេរី                       4
+      រដ្ឋមន្ត្រី ក្រសួង               4
+
+    A single word may be neutral while the pair is not. This is the
+    only representation of the three count-based ones that sees any
+    word order at all.
+
+
+[5] TF-IDF vs RAW COUNTS
+    by raw count        by TF-IDF weight    
+      មាន               មាន               
+      មិន               មិន               
+      នៃ                ឆ្នាំ             
+      ឆ្នាំ             នៃ                
+      ប្រទេស            តាម               
+      តាម               ប្រទេស            
+      កម្ពុជា           កម្ពុជា           
+      ឱ្យ               ត្រូវបាន          
+      ថ្ងៃ              ថ្ងៃ              
+      ខ្លួន             ខ្លួន             
+
+    TF-IDF pushes down words present in nearly every sentence and
+    lifts the ones only some sentences use.
+
+
+[6] WORD2VEC - nearest neighbours
+    vocabulary: 2330 words, 100 dimensions
+      មាន            -> ផ្លូវ, ជីជាតិ, ដី, ហូរ, តើ
+      មិន            -> គ្រប់គ្រាន់, ពួកគេ, ធម្មជាតិ, ឆ្លងកាត់, ធ្វើ
+      នៃ             -> រដ្ឋាភិបាល, រដ្ឋធម្មនុញ្ញ, គោលដៅ, ប្រជាជន, សមាជិក
+      ឆ្នាំ          -> ២០២២, ថ្ងៃទី, កាលពី, ខែកញ្ញា, ខែតុលា
+      ប្រទេស         -> ប្លុក, ជន, ការប្រើប្រាស់, ខណៈ, អ៊ុយក្រែន
+      តាម            -> ជនបទ, ការតស៊ូ, បៀតបៀន, សំរប, ដុះ
+
+
+[7] FASTTEXT - nearest neighbours, and unseen words
+      មាន            -> គ្មាន, ចំនួន៩, ចំនួន, ឈាន, មួយចំនួន
+      មិន            -> គ្រប់គ្រាន់, គ្រប់គ្រង, ច្បាស់, យកចិត្ត, គ្រាន់
+      នៃ             -> ការបំពេញ, កាច, ការបោះឆ្នោត, ការលះបង់, ការបំភាយ
+      ឆ្នាំ          -> ២០២២, ថ្ងៃទី៤, ខែ, ខែតុលា, ខែកញ្ញា
+
+    Words in test that never appear in train: 428 of 1523 (28.1%)
+
+    What each model does with them:
+      ប៊ិក             Word2Vec: NO VECTOR    fastText: ញិក, អាមេនី, បម្រែបម្រួល
+      ប៊ែន             Word2Vec: NO VECTOR    fastText: មែន, ដែន, សុន
+      ថិរ              Word2Vec: NO VECTOR    fastText: ស្រុក, មួយចំនួន, ចំនួន
+      មន្ត             Word2Vec: NO VECTOR    fastText: ខុន, ក្រឡាហោម, ស៊ុន
+      ចំណូល            Word2Vec: NO VECTOR    fastText: ចំណោត, ចំ, ចំណារ
+
+    This is the entire argument for fastText on Khmer. A quarter of the
+    test vocabulary is unseen, because 272 training sentences cannot
+    cover a language with this much compounding.
+
+
+[8] SUMMARY
+    representation    features   interpretable?
+    Bag-of-Words           858   yes - one word per column
+    N-grams               1086   yes - one phrase per column
+    TF-IDF                1086   yes - weighted words
+    Word2Vec               100   no - dense dimensions
+    fastText               100   no - dense dimensions

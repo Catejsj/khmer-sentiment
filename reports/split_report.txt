@@ -1,0 +1,29 @@
+==========================================================================
+TRAIN / VALIDATION / TEST SPLIT
+==========================================================================
+
+source: /home/sherlock/Desktop/khmer_sentiment/data/processed/preprocessed.csv
+dataset: 400 sentences  {'neutral': 151, 'negative': 133, 'positive': 116}
+
+[1] SPLITS  (stratified on label)
+    train   272 sentences   {'neutral': 103, 'negative': 90, 'positive': 79}
+    val      48 sentences   {'neutral': 18, 'negative': 16, 'positive': 14}
+    test     80 sentences   {'neutral': 30, 'negative': 27, 'positive': 23}
+
+[2] LEAKAGE CHECKS
+    train n val id overlap : 0  (must be 0)
+    train n test id overlap : 0  (must be 0)
+    val n test id overlap : 0  (must be 0)
+    duplicate cleaned texts : 0
+
+[3] A NOTE ON SIZE
+    272 training sentences across three classes is small. Person 5
+    should prefer cross-validation on train+val for model selection and
+    keep the test set for a single final measurement, rather than tuning
+    against 48 validation sentences where one example moves the score
+    by 2.1 points.
+
+[4] FILES WRITTEN
+    data/splits/train.csv   272 rows
+    data/splits/val.csv   48 rows
+    data/splits/test.csv   80 rows

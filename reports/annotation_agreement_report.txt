@@ -1,0 +1,93 @@
+==============================================================================
+ANNOTATION AGREEMENT  -  Khmer sentiment corpus
+==============================================================================
+
+[1] FILES LOADED
+    pair1  Bath      200 rows   complete
+             {'positive': np.int64(77), 'neutral': np.int64(69), 'negative': np.int64(54)}
+    pair1  Nacc      200 rows   complete
+             {'neutral': np.int64(81), 'positive': np.int64(61), 'negative': np.int64(58)}
+    pair2  Nita      200 rows   complete
+             {'neutral': np.int64(116), 'negative': np.int64(51), 'positive': np.int64(33)}
+    pair2  Reaksa    200 rows   complete
+             {'neutral': np.int64(94), 'negative': np.int64(60), 'positive': np.int64(46)}
+    pair3  Seth      200 rows   complete
+             {'neutral': np.int64(78), 'positive': np.int64(65), 'negative': np.int64(57)}
+
+    Note: labels were typed by hand, so 'Neutral', 'neutral' and
+    'Positive ' with a trailing space all appeared. They are normalised
+    to lowercase before any comparison - otherwise Cohen's Kappa would
+    treat them as different categories and collapse to near zero.
+
+
+[2] COHEN'S KAPPA WITHIN EACH PAIR
+    Two annotators, same 200 sentences, labelled independently.
+
+    pair1   Bath vs Nacc   (200 sentences)
+      raw agreement : 44.0%  (88/200)
+      Cohen's Kappa : 0.157   (slight)
+      confusion (rows=Bath, cols=Nacc):
+                Nacc:pos  Nacc:neu  Nacc:neg
+      Bath:pos        31        25        21
+      Bath:neu        21        34        14
+      Bath:neg         9        22        23
+
+    pair2   Nita vs Reaksa   (200 sentences)
+      raw agreement : 62.0%  (124/200)
+      Cohen's Kappa : 0.380   (fair)
+      confusion (rows=Nita, cols=Reaksa):
+                Reaksa:pos  Reaksa:neu  Reaksa:neg
+      Nita:pos          24           9           0
+      Nita:neu          18          69          29
+      Nita:neg           4          16          31
+
+    pair3: only Seth submitted - no second annotator, so no
+           agreement can be computed. Excluded from the dataset.
+
+    mean Cohen's Kappa across pairs : 0.269  (fair)
+
+
+[3] EACH ANNOTATOR vs THE ORIGINAL CORPUS LABEL
+    annotator  pair      kappa   accuracy
+    Bath       pair1     0.405     60.5%
+    Nacc       pair1     0.144     43.0%
+    Nita       pair2     0.429     62.0%
+    Reaksa     pair2     0.587     72.5%
+    Seth       pair3     0.602     73.5%
+
+    The corpus ships its own polarity label. We treat it as a
+    reference point, not as truth: our annotators read full sentences
+    in context, whereas the corpus label was assigned to a shorter cue
+    phrase, so honest disagreement is expected.
+
+
+[4] ADJUDICATED DATASET
+    sentences from pairs with two annotators : 400
+      both annotators agreed                 : 212  (53.0%)
+      disagreed, needs the pair to resolve   : 188
+
+    label distribution of the agreed rows:
+      {'neutral': np.int64(103), 'positive': np.int64(55), 'negative': np.int64(54)}
+
+    The agreed rows are the training data. Disagreements are left
+    unlabelled rather than broken by a coin flip: the pair should settle
+    them, and until then they are not evidence of anything.
+
+
+[5] TWO DATASET VARIANTS
+    A. labelled_dataset.csv             212 rows - only where both annotators agreed
+       Cleanest signal, but small, and the surviving rows are the easy
+       ones: keeping only agreements biases the set toward obvious cases.
+    B. labelled_dataset_resolved.csv    400 rows - disagreements settled by the corpus label
+       Nearly twice the data and keeps the hard cases, at the cost of
+       leaning on an external label for 47% of rows.
+       {'neutral': np.int64(151), 'negative': np.int64(133), 'positive': np.int64(116)}
+
+    We train on B and report A as a robustness check. Person 5 should
+    state which was used - the two are not interchangeable.
+
+
+[6] FILES WRITTEN
+    data/processed/adjudicated_annotations.csv   all 400 rows, with both votes
+    data/processed/labelled_dataset.csv          212 agreed rows
+    data/processed/labelled_dataset_resolved.csv 400 rows, disagreements resolved

@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+# source corpus, 5.4 MB, publicly downloadable from
+# github.com/ye-kyaw-thu/kh-polarity
+data/raw/kh-polar.txt
+
+# gensim models - regenerate with scripts/representations.py
+data/features/*.model
+data/features/*.npy
+
+# per-stage dumps, large and reproducible
+data/processed/preprocessing_stages*.csv
+
+.~lock.*#
+.DS_Store

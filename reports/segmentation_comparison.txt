@@ -1,0 +1,79 @@
+==============================================================================
+KHMER WORD SEGMENTATION  -  dictionary vs CRF
+==============================================================================
+
+[1] THE PROBLEM
+    Khmer is written without spaces between words:
+      បឹងកេតធ្លាប់បានក្លាយជាជើងឯកនៃពានរង្វាន់សម្តេចតេជោនេះ១លើកកាលពីឆ្នាំ២០១៩ ន
+    That is 3 whitespace-separated chunks. Before anything else
+    can happen - counting words, building features, training a model -
+    the boundaries have to be found.
+
+[2] THE TWO APPROACHES
+
+    DICTIONARY (maximum matching)
+      Walk left to right; at each position take the longest string present in a
+      Khmer wordlist. Deterministic and fully inspectable - you can point at the
+      dictionary and say why a cut was made. But it can only find words the
+      dictionary already contains.
+
+    CRF (conditional random field)
+      A model trained on hand-segmented Khmer. For each gap between characters
+      it predicts boundary or no-boundary from the surrounding characters.
+      Handles unseen words, but you cannot inspect why it cut where it did.
+
+[3] THE DICTIONARY
+    source  : SIL NRSI khmerlbdict (MIT licence)
+    entries : 34,398 unique words
+    longest : 30 characters
+    assembled from frequency wordlists, name lists and place lists;
+    the files and licence are kept in data/dictionary/
+
+[4] BOTH RUN ON OUR 400 SENTENCES
+                     tokens  vocabulary  mean/sentence   seconds
+    dictionary        14488        3143           36.2       0.1
+    CRF               11615        3034           29.0       0.7
+
+    dictionary tokens left unmatched : 2202  (15.2%)
+    Those are positions where no dictionary word fit, so a single
+    cluster was emitted. They are the visible cost of the dictionary
+    approach - every one is a word the wordlist does not contain.
+
+[5] WHERE THEY DISAGREE
+    sentences segmented identically : 3 / 400
+    sentences segmented differently : 397
+
+    Three examples, dictionary first:
+
+      sentence 0
+        dict : បឹងកេត · ធ្លាប់ · បាន · ក្លាយជា · ជើងឯក · នៃ · ពានរង្វាន់ · សម្តេច · តេ · ជោ · នេះ · ១ · លើក · កាលពី · ឆ្នាំ · ២
+        CRF  : បឹង · កេត · ធ្លាប់ · បាន · ក្លាយជា · ជើងឯក · នៃ · ពានរង្វាន់ · សម្តេច · តេជោ · នេះ · ១លើក · កាលពី · ឆ្នាំ · ២០១៩ · និង
+
+      sentence 1
+        dict : មាន ·   · ២ · , · ០ · ៧ · ៣ ·   · ករណី · ដែល · បាន · រាយការណ៍ · ទាក់ទងនឹង · ការ · ដួល · សន្លប់
+        CRF  : មាន · ២,០៧៣ · ករណី · ដែល · បាន · រាយការណ៍ · ទាក់ទង · នឹង · ការដួល · សន្លប់ · របស់ · កម្មករ · ។
+
+      sentence 2
+        dict : ច្បាប់ · ស្តី · ពីការ · គ្រប់គ្រង · និង · ការ · ធ្វើអាជីវកម្ម · ធនធាន · រ៉ែ · ពី · ពេលនេះ · តទៅ · ហៅ · កាត់ · ថា · ច្បាប់
+        CRF  : ច្បាប់ · ស្តីពី · ការគ្រប់គ្រង · និង · ការធ្វើ · អាជីវកម្ម · ធនធាន · រ៉ែ · ពី · ពេលនេះ · តទៅ · ហៅ · កាត់ · ថា · ច្បាប់ · រុករក
+
+[6] WHICH WE USE, AND WHY
+    We use the CRF (khmer-nltk) for the pipeline.
+
+    The dictionary approach is easier to explain and to audit, and on a fixed
+    vocabulary it is perfectly good. Our corpus is news text, which is full of
+    proper nouns, place names, organisation names and numbers - exactly the
+    material a fixed wordlist misses. Every unmatched position becomes a
+    single-cluster fragment, and those fragments then become features, so the
+    error propagates all the way to the classifier.
+
+    The CRF was trained on hand-segmented Khmer and generalises to words it has
+    not seen. We keep the dictionary implementation because it is the honest
+    comparison: it shows what the CRF is buying us, and it is a fallback if the
+    model is unavailable.
+
+[7] LIMITATION
+    Neither output is checked against a gold segmentation - we have no
+    hand-segmented Khmer of our own. The comparison shows the two
+    methods differ and by how much, not which is correct. Measuring
+    that would need a segmented reference such as the khPOS corpus.

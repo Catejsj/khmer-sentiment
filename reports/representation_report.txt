@@ -1,0 +1,51 @@
+==============================================================================
+TEXT REPRESENTATION  -  five feature sets for the classifier
+==============================================================================
+
+[1] INPUT
+    train   272 sentences   {'neutral': 103, 'negative': 90, 'positive': 79}
+    val      48 sentences   {'neutral': 18, 'negative': 16, 'positive': 14}
+    test     80 sentences   {'neutral': 30, 'negative': 27, 'positive': 23}
+
+    Text is already word-segmented by scripts/preprocess.py, with tokens
+    joined by spaces. The vectorisers use token_pattern=\S+ because
+    scikit-learn's default assumes English word characters and would drop
+    Khmer script entirely.
+
+    All five are FIT ON TRAIN ONLY and then applied to val and test.
+
+[2] REPRESENTATIONS BUILT
+    name            size             train shape
+    bow              858 features   train   (272, 858)   sparsity 98.41%
+    ngram           1086 features   train  (272, 1086)   sparsity 98.55%
+    tfidf           1086 features   train  (272, 1086)   sparsity 98.55%
+    word2vec         100 dims       train   (272, 100)   vocab 2330, test OOV 28.1%
+    fasttext         100 dims       train   (272, 100)   vocab 2330, test OOV 28.1%
+
+[3] WHY min_df=2
+    A word appearing in only one sentence cannot generalise - it can only
+    ever fire for that one example, so the model memorises instead of
+    learning. On a corpus this small that matters more, not less.
+
+[4] WHAT EACH ONE CAPTURES
+    Bag-of-Words  which words appear, and how often
+    N-grams       adds word pairs, so ' មិន ល្អ ' (not good) survives as one feature
+    TF-IDF        down-weights words common to every sentence, lifts the
+                  distinctive ones
+    Word2Vec      meaning from context - words used similarly sit close
+    fastText      same, plus character n-grams, so a word never seen in
+                  training still gets a vector built from its pieces
+
+    That last point is measurable here: 28.1% of the words in the test
+    set never appear in training. Word2Vec drops every one of them;
+    fastText builds a vector from character chunks instead.
+
+[5] FOR PERSON 5 - loading these
+
+    from load_features import load
+
+    X_train, X_val, X_test, y_train, y_val, y_test = load("tfidf")
+
+    Names: bow, ngram, tfidf, word2vec, fasttext
+    Sparse ones return scipy CSR matrices, embeddings return dense numpy arrays.
+    Both feed scikit-learn estimators directly, so one loop covers all five.
