@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """
-Figures for the Person 4 slides.
+Figures for the slides.
 
   1. Words that signal each sentiment -> DIVERGING (polarity around a neutral
      zero), so two hues with a gray midpoint.
   2. Feature count per representation -> MAGNITUDE, single hue.
+  3. Validation against test per model -> the two disagree (Person 5).
+  4. Confusion matrix of the reported model -> where the errors go (Person 6).
+  5. Human annotators scored like a model -> the ceiling (Person 6).
 
 Khmer needs a font that covers the script; matplotlib's default does not, and
 silently renders empty boxes. Noto Sans Khmer is set explicitly and the script
@@ -14,6 +17,7 @@ Usage:
     python scripts/make_figures.py
 """
 import os
+import sys
 
 import matplotlib
 matplotlib.use("Agg")
@@ -22,6 +26,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import font_manager
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics import confusion_matrix
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPLITS = os.path.join(ROOT, "data", "splits")
@@ -180,10 +185,111 @@ def fig_model_results():
     return out
 
 
+def fig_confusion():
+    """Where the reported model's errors go - Person 6."""
+    path = os.path.join(ROOT, "reports", "model_results.csv")
+    if not os.path.exists(path):
+        print("skipping confusion figure - run scripts/train_models.py first")
+        return None
+
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from analyse_results import refit
+    from load_features import AVAILABLE, CLASSES
+
+    res = pd.read_csv(path).dropna(subset=["test_f1"])
+    res = res[res.representation.isin(AVAILABLE)]
+    row = res.loc[res["test_f1"].idxmax()]
+    _, pred, y_true = refit(row["model"], row["representation"], str(row["best_params"]))
+    cm = confusion_matrix(y_true, pred, labels=CLASSES)
+    share = cm / cm.sum(axis=1, keepdims=True)
+
+    fig, ax = plt.subplots(figsize=(8.5, 7), dpi=200)
+    fig.patch.set_facecolor(SURFACE)
+    ax.imshow(share, cmap="Blues", vmin=0, vmax=1)
+
+    for i in range(len(CLASSES)):
+        for j in range(len(CLASSES)):
+            ax.text(j, i, f"{cm[i, j]}\n{share[i, j]:.0%}", ha="center", va="center",
+                    fontsize=15, color="#ffffff" if share[i, j] > 0.5 else INK)
+
+    ax.set_xticks(range(len(CLASSES)), CLASSES, fontsize=12, color=INK)
+    ax.set_yticks(range(len(CLASSES)), CLASSES, fontsize=12, color=INK)
+    ax.set_xlabel("predicted", fontsize=12, color=INK_2, labelpad=10)
+    ax.set_ylabel("actual", fontsize=12, color=INK_2, labelpad=10)
+    ax.set_title("Where the errors go", fontsize=17, color=INK, pad=38,
+                 loc="left", fontweight="bold")
+    ax.text(0, 1.03, f"{row['model']} on {row['representation']} — it hedges toward "
+                     "neutral rather than flipping polarity",
+            transform=ax.transAxes, fontsize=11, color=INK_2)
+    for side in ("top", "right", "left", "bottom"):
+        ax.spines[side].set_visible(False)
+    ax.tick_params(length=0)
+
+    fig.tight_layout()
+    out = os.path.join(FIGURES, "fig4_confusion.png")
+    fig.savefig(out, facecolor=SURFACE, bbox_inches="tight")
+    plt.close(fig)
+    return out
+
+
+def fig_ceiling():
+    """The model against the humans, in the same units - Person 6."""
+    path = os.path.join(ROOT, "reports", "model_results.csv")
+    if not os.path.exists(path):
+        print("skipping ceiling figure - run scripts/train_models.py first")
+        return None
+
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from analyse_results import human_scores
+
+    rows, pooled = human_scores()
+    if not rows:
+        print("skipping ceiling figure - no adjudicated annotations")
+        return None
+
+    res = pd.read_csv(path).dropna(subset=["test_f1"])
+    best = res["test_f1"].max()
+
+    labels = [f"{r['pair']}\n{r['who']}" for r in rows] + ["all pairs\npooled", "our best model\non test"]
+    vals = [r["f1"] for r in rows] + [pooled, best]
+    colors = ["#9ec5f4"] * len(rows) + ["#9ec5f4", BLUE]
+
+    fig, ax = plt.subplots(figsize=(11, 7), dpi=200)
+    fig.patch.set_facecolor(SURFACE)
+    bars = ax.bar(range(len(vals)), vals, color=colors, width=0.62)
+    for b in bars:
+        b.set_joinstyle("round")
+
+    ax.axhline(1 / 3, color="#9a9992", linewidth=1.4, linestyle="--")
+    ax.text(-0.45, 1 / 3 + 0.015, "random baseline 0.333",
+            fontsize=10, color=INK_2, ha="left")
+
+    ax.set_xticks(range(len(labels)), labels, fontsize=11, color=INK)
+    ax.set_ylabel("macro-F1", fontsize=11, color=INK_2, labelpad=10)
+    ax.set_title("How well do humans do the same task?",
+                 fontsize=17, color=INK, pad=38, loc="left", fontweight="bold")
+    ax.text(0, 1.015, "one annotator predicting their partner's labels, scored exactly like a model",
+            transform=ax.transAxes, fontsize=11, color=INK_2)
+    ax.yaxis.grid(True, color=GRID, linewidth=1)
+    ax.set_axisbelow(True)
+    ax.set_ylim(0, 1.0)
+    style(ax)
+
+    for i, v in enumerate(vals):
+        ax.text(i, v + 0.02, f"{v:.3f}", ha="center", fontsize=12, color=INK)
+
+    fig.tight_layout()
+    out = os.path.join(FIGURES, "fig5_ceiling.png")
+    fig.savefig(out, facecolor=SURFACE, bbox_inches="tight")
+    plt.close(fig)
+    return out
+
+
 def main():
     os.makedirs(FIGURES, exist_ok=True)
     use_khmer_font()
-    for path in (fig_sentiment_words(), fig_feature_counts(), fig_model_results()):
+    for path in (fig_sentiment_words(), fig_feature_counts(), fig_model_results(),
+                 fig_confusion(), fig_ceiling()):
         if path:
             print("wrote", path)
 

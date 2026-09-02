@@ -19,7 +19,7 @@ annotate (pairs) → agreement → preprocess → split → REPRESENT → train 
 | **3** | **Annotation & preprocessing** | `docs/PERSON3_ANNOTATION_PREPROCESSING.md` ✅ |
 | **4** | **Text representation** | `docs/PERSON4_TEXT_REPRESENTATION.md` ✅ |
 | **5** | **ML models & training** | `docs/PERSON5_MODELS_TRAINING.md` ✅ |
-| 6 | Results & conclusion | `reports/model_results.csv` — 42 models ready |
+| **6** | **Results & conclusion** | `docs/PERSON6_RESULTS.md` ✅ |
 
 ## For Person 5 — loading the features
 
@@ -74,6 +74,15 @@ third at 0.529**. Validation and test rank the models differently — selecting 
 validation gives Linear SVM + fastText, which scores 0.416 on test. With 72
 validation sentences the top ten models are statistically indistinguishable.
 
+**Results.** The 0.544 carries a 95% bootstrap interval of **[0.452, 0.630]**,
+and McNemar cannot separate the best model from the runner-up (**p = 0.815**) —
+the top of the leaderboard is one result, not a ranking. Validation rank does not
+predict test rank (**ρ = −0.016**); cross-validation would have been the better
+selector (ρ = +0.389, and 0.472 on test). Scored the same way as a model, our
+annotators reach **0.666** against each other, so the model sits 12 points below
+the humans rather than 46 below a perfect score. **The bottleneck is the labels,
+not the algorithm.**
+
 ## Scripts
 
 | Script | Does |
@@ -87,6 +96,7 @@ validation sentences the top ten models are statistically indistinguishable.
 | `inspect_representations.py` | what the features actually contain |
 | `train_models.py` | **8 algorithms × 5 representations, CV-tuned** |
 | `train_rnn.py` | **SimpleRNN and LSTM (PyTorch)** |
+| `analyse_results.py` | **significance, error analysis, the human ceiling** |
 | `make_figures.py` | slide figures (needs Noto Sans Khmer) |
 | `build_annotation_sheets.py` | generate the blank annotation workbooks |
 
@@ -108,6 +118,7 @@ python3.11 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
 ./.venv/bin/python scripts/inspect_representations.py
 ./.venv/bin/python scripts/train_models.py
 ./.venv/bin/python scripts/train_rnn.py
+./.venv/bin/python scripts/analyse_results.py
 ./.venv/bin/python scripts/make_figures.py
 ```
 

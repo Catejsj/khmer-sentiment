@@ -1,0 +1,223 @@
+==============================================================================
+RESULTS ANALYSIS  -  what the 42 models actually tell us
+==============================================================================
+
+42 models. Test set is 120 sentences, so one sentence is
+0.83 points of accuracy. Random baseline for three classes is 0.333.
+
+
+[1] THE LEADERBOARD  (top 10 by test macro-F1)
+    model                 representation       cv    val   test
+    Naive Bayes           tfidf             0.455  0.388  0.544
+    Logistic Regression   tfidf             0.493  0.418  0.531
+    LSTM                  learned embeddi     -    0.437  0.529
+    Linear SVM            tfidf             0.487  0.406  0.519
+    Gradient Boosting     bow               0.477  0.392  0.516
+    Random Forest         tfidf             0.492  0.413  0.514
+    SVM (RBF)             tfidf             0.464  0.423  0.507
+    Naive Bayes           bow               0.451  0.362  0.506
+    SVM (RBF)             ngram             0.478  0.378  0.501
+    Gradient Boosting     ngram             0.476  0.334  0.492
+
+    Read the val and test columns against each other before reading
+    the ranking: they do not agree, and [2] measures whether the
+    ranking survives that.
+
+
+[2] IS ANY OF THIS DIFFERENCE REAL
+    95% bootstrap confidence intervals, 2000 resamples of the test set.
+    Two models are distinguishable only if their intervals barely overlap.
+
+    best on test            Naive Bayes on tfidf
+                            macro-F1 0.544   95% CI [0.452, 0.630]
+    runner-up               Logistic Regression on tfidf
+                            macro-F1 0.531   95% CI [0.437, 0.623]
+    selected on validation  Linear SVM on fasttext
+                            macro-F1 0.416   95% CI [0.327, 0.506]
+
+    The best model's interval is 18 points wide. Every model in [1]
+    falls inside it, so the leaderboard order is not established by its
+    own numbers. Whether any pair of them differs needs a paired test,
+    which compares the two models sentence by sentence rather than
+    comparing two summary scores.
+
+    McNemar, exact - is the leaderboard order real
+      Naive Bayes+tfidf vs Logistic Regression+tfidf
+      both right  56   only the first  10   only the second   8   both wrong  46
+      p = 0.815   no measurable difference
+
+    McNemar, exact - what did selecting on validation cost
+      Naive Bayes+tfidf vs Linear SVM+fasttext
+      both right  41   only the first  25   only the second  11   both wrong  43
+      p = 0.029   difference survives
+
+    Two different answers, and both matter:
+    - The top of the leaderboard is flat (p = 0.815). Naive Bayes,
+      Logistic Regression and the LSTM are one result, not a ranking.
+    - The validation-selected model really is worse (p = 0.029), so
+      the selection failure in [3] cost us something measurable.
+
+    One caution on that second p-value: the model it favours was chosen
+    because it topped the test set. Across 42 models the best-looking
+    comparison is expected to look good, and 0.029 x 10 comparisons
+    from [1] is no longer significant. We report it as suggestive.
+
+
+[3] WHICH SELECTION RULE SHOULD WE HAVE TRUSTED
+    Each rule picks one model without ever seeing test. The test column
+    is what that choice would have cost or gained.
+
+    rule                        picks                                    test
+    highest validation macro-F1 Linear SVM on fasttext                  0.416
+    highest cross-validation F1 Random Forest on ngram                  0.472
+    (oracle - highest test)     Naive Bayes on tfidf                    0.544
+
+    rank correlation with test  validation  rho -0.016  (p 0.921)
+                                cross-val   rho +0.389  (p 0.016)
+
+    Neither selector ranks models the way test does. With 72 validation
+    sentences that is expected, and it is the argument for reporting a
+    range rather than a winner.
+
+
+[4] WHERE THE MODELS FAIL
+    Naive Bayes on tfidf (best on test), 120 test sentences
+
+                  precision    recall  f1-score   support
+    
+        positive       0.58      0.42      0.48        36
+         neutral       0.55      0.59      0.57        46
+        negative       0.53      0.63      0.58        38
+    
+        accuracy                           0.55       120
+       macro avg       0.55      0.55      0.54       120
+    weighted avg       0.55      0.55      0.55       120
+    
+    confusion matrix (rows = true, cols = predicted):
+              pred:pos  pred:neu  pred:neg
+    true:pos        15        12         9
+    true:neu         7        27        12
+    true:neg         4        10        24
+
+    weakest class : positive (F1 0.484)
+    of 54 errors, 22 are a polarity called neutral
+    and 13 are a full polarity flip (positive <-> negative).
+    The model is not confusing good with bad - it is failing to commit,
+    which is the same axis our annotators disagreed on.
+
+
+[5] WHAT THE FAILING SENTENCES LOOK LIKE
+                                   correct     wrong
+    sentences                           66        54
+    mean length (tokens)              19.3      20.5
+    mean out-of-vocabulary           22.9%     23.3%
+
+    Neither explains the errors: 1.2 tokens and 0.4% out-of-vocabulary
+    separate a right answer from a wrong one. The failures are not the
+    long sentences or the ones full of unseen words, which is what we
+    expected to find and did not.
+
+    accuracy on the 32 sentences containing a negation word : 62.5%
+    accuracy on the 88 without one                 : 52.3%
+
+    Negated sentences are handled 10 points BETTER, not worse. That
+    is the bigram features earning their place: 'មិន ទាន់' is one of the
+    model's strongest negative features in [6], so the negation is
+    read as a unit instead of cancelling out. It also vindicates
+    Person 3's decision to keep negation out of the stopword list.
+
+    Three misclassified sentences:
+
+      true negative predicted neutral  oov 25%
+      ពីរបីឆ្នាំមុន ខ្ញុំបានទៅធ្វើតេស្តរកមើលជម្ងឺមហារីក ហើយខ្ញុំមានការបារម្ភអំពីលទ្ធផលដែលនឹងចេញមក ។
+
+      true neutral  predicted negative oov 21%
+      បងប្រុសដែលជាអ្នកដឹកនាំក្រុមទេសចរណ៍(Tour Leader) ដើរទៅដើរមក និយាយទូរស័ព្ទជាមួយអ្នកដែលមិនទាន់មកដល់។
+
+      true negative predicted positive oov 26%
+      ការស្រាវជ្រាវនៅសាកលវិទ្យាល័យបានរកឃើញថាការគេងមិនដកដង្ហើមត្រូវបានផ្សារភ្ជាប់ជាមួយនឹងអត្រាខ្ពស់នៃជំងឺដែលជាមូលហេតុ
+
+
+[6] WHAT THE MODEL LEARNED
+    Naive Bayes on tfidf, test macro-F1 0.544
+    Embeddings have no word per dimension, so this is read off the
+    count-based model - the only one whose evidence is inspectable.
+
+    negative
+      ប៉ះពាល់   ប៉ះ   មិន   មានអារម្មណ៍   ប្រឈម   ការពិត   មិន ទាន់   ពិបាក
+    neutral
+      ផ្លាស់ប្តូរ   ចាប់ផ្តើម   ប៉ុណ្ណោះ   សវនាការ   លើក   ស្នាក់   កីឡា   ជាទូទៅ
+    positive
+      ដ៏ ល្អ   ប្រកបដោយ   ការអប់រំ   ស្នេហា   ភ្លេច   នូវ   ប្រសើរឡើង   ជួយ
+
+    These are the same words Person 4's log-odds figure surfaces, which
+    is the check that matters: the model keys on sentiment vocabulary,
+    not on topic or on artefacts of the corpus.
+
+
+[7] THE CEILING
+    Macro-F1 of one annotator's labels predicting their partner's, on
+    the same three classes and the same scale as every model score.
+
+    pair    annotators              sentences   macro-F1
+    pair1   Bath / Nacc                   200      0.438
+    pair2   Nita / Reaksa                 200      0.608
+    pair3   Seth / Krisna                 200      0.946
+    all                                   600      0.666
+
+    best model on test : 0.544
+    human vs human     : 0.666
+    gap                : +0.122
+
+    The pairs differ more from each other than the model differs from
+    the humans. Pair 3 shows the task is learnable when the guideline
+    is applied consistently; pair 1 shows what happens when it is not.
+    The label noise from the weaker pairs is in the training data, so
+    the model inherits it.
+
+
+[8] CONCLUSION
+    1. The system works, weakly. 0.544 macro-F1 against a 0.333
+       random baseline is real signal on a three-class problem.
+    2. The top of the leaderboard is one result, not a ranking. McNemar
+       cannot separate the best model from the runner-up (p = 0.815) and
+       every model in [1] sits inside the best one's confidence interval.
+       Reporting a single winner would be reporting noise.
+    3. Choosing the model on 72 validation sentences cost real points:
+       0.416 against 0.544, and validation rank barely
+       correlates with test rank (rho -0.016). Cross-validation was the
+       better selector (rho +0.389) and we should have trusted it.
+    4. The bottleneck is the labels, not the algorithm. Our annotators
+       score 0.666 against each other, and the model reaches 0.544
+       against labels built from them. Most of the remaining gap is
+       disagreement we baked into the data.
+    5. Complexity did not pay at this size. TF-IDF with a linear model
+       matches everything else, and the LSTM - the only model that reads
+       word order - lands inside the same flat group despite costing far
+       more to train.
+
+
+[9] LIMITATIONS
+    - 120 test sentences. Every number here carries roughly a
+      +/-0.09 confidence interval, which is wider than most of the gaps
+      we are comparing.
+    - Trained on the resolved variant, where 199 of 600 labels came from
+      the corpus rather than from our annotators. The agreement-only
+      variant has not been run through the models, so the robustness
+      check the annotation report promises is still open.
+    - Single train/val/test split with one seed. Repeated splits would
+      give a better estimate than one 120-sentence test set.
+    - Segmentation is unvalidated: no gold segmented Khmer to check the
+      CRF against, so tokenisation errors propagate silently.
+
+
+[10] WHAT WOULD ACTUALLY IMPROVE IT
+    In the order we would do it:
+    1. Re-annotate pair 1 and pair 2 with the tightened guideline. Pair 3
+       reached 0.917 Kappa, so the ceiling moves before any model changes.
+    2. More data. 408 training sentences is the binding constraint on
+       every model, and the only one that helps the RNN.
+    3. A pretrained Khmer language model (XLM-R, or a Khmer BERT) instead
+       of embeddings trained on 408 sentences. This is the change most
+       likely to move the score, and the one our corpus size makes
+       necessary rather than optional.
