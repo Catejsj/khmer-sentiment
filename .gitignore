@@ -15,3 +15,4 @@ data/processed/preprocessing_stages*.csv
 
 .~lock.*#
 .DS_Store
+.CLAUDE.md
